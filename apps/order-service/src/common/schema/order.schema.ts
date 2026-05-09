@@ -17,6 +17,9 @@ export class Order {
   @Prop({ required: true, trim: true })
   userId!: string;
 
+  @Prop({ required: true, trim: true })
+  emailAddress!: string;
+
   @Prop({ type: Types.ObjectId, ref: 'Product', required: true })
   productId!: Types.ObjectId;
 

@@ -39,6 +39,7 @@ export class OrderServiceService {
 
     const order = await this.orderModel.create({
       userId: createOrderDto.userId,
+      emailAddress: createOrderDto.emailAddress,
       productId: product._id,
       quantity: createOrderDto.quantity,
       totalPrice,
@@ -49,6 +50,30 @@ export class OrderServiceService {
 
     return order;
   }
+
+  async getOrderDetailsWithProduct(orderId: string) {
+    const order = await this.orderModel
+      .findById(orderId)
+      .populate('productId', 'name description price image brand category stock')
+      .exec();
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    // Format response to match email service expectations
+    return {
+      _id: order._id,
+      userId: order.userId,
+      emailAddress: order.emailAddress,
+      quantity: order.quantity,
+      totalPrice: order.totalPrice,
+      transactionId: order.transactionId,
+      paymentStatus: order.paymentStatus,
+      product: order.productId,
+    };
+  }
+
   async updateOrderStatus(orderId: string, transactionId: string) {
     await this.orderModel.findByIdAndUpdate({
       _id: orderId,
@@ -60,5 +85,12 @@ export class OrderServiceService {
   async updatePaymentStatus(pidx: string, orderId: string) {
     //Update the order with the payment status using the transaction ID (pidx) and order ID
     await this.orderModel.findByIdAndUpdate(orderId, { paymentStatus: PaymentStatus.INITIALIZED, transactionId: pidx }).exec();
+  }
+  async getOrderById(orderId: string) {
+    const order = await this.orderModel.findById(orderId).exec();
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    return order;
   }
 }

@@ -12,6 +12,6 @@ export class NotificationServiceController {
   }
   @EventPattern('payment_confirmed')
   async handlePaymentConfirmed(data: { orderId: string ,transactionId: string }) {
-    console.log(`Received payment confirmation for order ${data.orderId} with transaction ID ${data.transactionId}`);
+    await this.notificationServiceService.sendPaymentConfirmation(data.orderId, data.transactionId);
   }
 }

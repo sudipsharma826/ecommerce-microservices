@@ -6,6 +6,9 @@ export class CreateOrderDto {
   userId!: string;
 
   @IsNotEmpty()
+  emailAddress!: string;
+
+  @IsNotEmpty()
   @IsMongoId()
   productId!: string;
 
