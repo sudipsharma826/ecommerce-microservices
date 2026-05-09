@@ -8,6 +8,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
     }),
     ClientsModule.register([ 
       {
