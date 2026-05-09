@@ -36,6 +36,13 @@ export class OrderServiceController {
     );
     return { order, paymentResult };
   }
+
+  @MessagePattern({ cmd: 'get_order_details' })
+  async getOrderDetails(@Payload() data: { orderId: string; transactionId: string }) {
+    const orderDetails = await this.orderServiceService.getOrderDetailsWithProduct(data.orderId);
+    return orderDetails;
+  }
+
   @EventPattern('payment_initiated')
   async handlePaymentInitiated(@Payload() data: { pidx: string ,orderId: string }) {
     await this.orderServiceService.updatePaymentStatus(data.pidx, data.orderId);

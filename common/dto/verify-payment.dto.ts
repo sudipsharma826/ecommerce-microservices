@@ -6,11 +6,6 @@ export class VerifyPaymentDto {
   orderId!: string;
 
   @IsNotEmpty()
-  @IsMongoId()
   pidx!: string;
 
-   @Type(() => Number)
-   @IsInt()
-   @Min(1)
-   amount!: number;
 }
