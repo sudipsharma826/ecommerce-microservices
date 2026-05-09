@@ -4,6 +4,7 @@ import { OrderServiceController } from './order-service.controller';
 import { OrderServiceService } from './order-service.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Product, ProductSchema } from './common/schema/product.schema';
 import { Order, OrderSchema } from './common/schema/order.schema';
 
@@ -25,6 +26,24 @@ import { Order, OrderSchema } from './common/schema/order.schema';
     // Register schema for MongoDB
     MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }]),
     MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }]),
+    // RabbitMQ Clients
+    ClientsModule.registerAsync([
+      {
+        name: 'PAYMENT_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [config.get<string>('RABBITMQ_URL') ?? ''],
+            queue: config.get<string>('PAYMENT_SERVICE_QUEUE') ?? '',
+            queueOptions: {
+              durable: false,
+            },
+          },
+        }),
+      },
+    ]),
   ],
   controllers: [OrderServiceController],
   providers: [OrderServiceService],

@@ -1,14 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { OrderDocument } from './common/schema/order.schema';
+import { OrderDocument, OrderStatus } from './common/schema/order.schema';
 import { ProductDocument } from './common/schema/product.schema';
+import { CreateOrderDto } from 'common/dto/create-order.dto';
+import { PaymentStatus } from 'apps/payment-service/src/common/schema/payment.schema';
+
 
 @Injectable()
 export class OrderServiceService {
   constructor(
-    @InjectModel('Order') private readonly orderModel:Model<OrderDocument>,
-    @InjectModel('Product') private readonly productModel:Model<ProductDocument>
+    @InjectModel('Order') private readonly orderModel: Model<OrderDocument>,
+    @InjectModel('Product') private readonly productModel: Model<ProductDocument>,
   ) {}
   getHello(): string {
     return 'Hello World!';
@@ -19,5 +22,43 @@ export class OrderServiceService {
     const products = this.productModel.find().exec();
     return products;
     
+  }
+
+  async createOrder(createOrderDto: CreateOrderDto) {
+    const product = await this.productModel.findById(createOrderDto.productId).exec();
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (product.stock < createOrderDto.quantity) {
+      throw new BadRequestException('Insufficient stock');
+    }
+
+    const totalPrice = product.price * createOrderDto.quantity;
+
+    const order = await this.orderModel.create({
+      userId: createOrderDto.userId,
+      productId: product._id,
+      quantity: createOrderDto.quantity,
+      totalPrice,
+    });
+
+    product.stock -= createOrderDto.quantity;
+    await product.save();
+
+    return order;
+  }
+  async updateOrderStatus(orderId: string, transactionId: string) {
+    await this.orderModel.findByIdAndUpdate({
+      _id: orderId,
+      transactionId,
+    }, {
+      paymentStatus: OrderStatus.CONFIRMED,
+    }).exec();
+  }
+  async updatePaymentStatus(pidx: string, orderId: string) {
+    //Update the order with the payment status using the transaction ID (pidx) and order ID
+    await this.orderModel.findByIdAndUpdate(orderId, { paymentStatus: PaymentStatus.INITIALIZED, transactionId: pidx }).exec();
   }
 }
