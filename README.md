@@ -1,98 +1,91 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Ecommerce Microservices
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+An ecommerce backend built with NestJS microservices. The system is split into a gateway and three domain services so orders, payments, and notifications can scale independently.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Overview
 
-## Description
+The project uses a gateway service as the public entry point and RabbitMQ to coordinate work between services. MongoDB is used for persistence in the order and payment services, while the notification service sends payment confirmation emails.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Services
 
-## Project setup
+- Gateway: exposes HTTP endpoints for product lookup, order placement, and payment verification.
+- Order service: handles product retrieval, order creation, order status updates, and payment-related events.
+- Payment service: processes payment requests, verifies payment callbacks, and publishes follow-up events.
+- Notification service: listens for payment confirmation events and sends notification emails.
 
-```bash
-$ npm install
-```
+## Main Flow
 
-## Compile and run the project
+1. The gateway receives a request to place an order.
+2. The order service creates the order and forwards payment processing to the payment service.
+3. The payment service returns a payment URL and emits payment status events through RabbitMQ.
+4. After payment verification, the payment service confirms the order and triggers the notification service.
 
-```bash
-# development
-$ npm run start
+## Tech Stack
 
-# watch mode
-$ npm run start:dev
+- NestJS
+- TypeScript
+- RabbitMQ
+- MongoDB and Mongoose
+- Resend for email delivery
+- Axios and RxJS for service integration
 
-# production mode
-$ npm run start:prod
-```
+## Environment Variables
 
-## Run tests
+Each service loads its own `.env` file from its app folder.
+
+- `PORT` for the gateway HTTP port
+- `DATABASE_URL` for MongoDB connections
+- `RABBITMQ_URL` for RabbitMQ access
+- `ORDER_SERVICE_QUEUE` for order service messaging
+- `PAYMENT_SERVICE_QUEUE` for payment service messaging
+- `NOTIFICATION_SERVICE_QUEUE` for notification service messaging
+- `RABBITMQ_ORDER_QUEUE` for the notification service order queue fallback
+
+## Run Locally
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Start the gateway:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run start:dev:gateway
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Start the order service:
 
-## Resources
+```bash
+npm run start:dev:order
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+Start the payment service:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+npm run start:dev:payment
+```
 
-## Support
+Start the notification service:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+npm run start:dev:notification
+```
 
-## Stay in touch
+## API Endpoints
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- `GET /` returns a basic health response from the gateway.
+- `GET /getProducts` returns available products.
+- `POST /place-order` creates an order.
+- `POST /verifyPayment` verifies a payment using `orderId` and `pidx`.
+- `GET /payment/verify` handles the payment provider callback.
+
+## Scripts
+
+- `npm run build` builds the project.
+- `npm run test` runs unit tests.
+- `npm run test:e2e` runs end-to-end tests.
+- `npm run lint` checks and fixes lint issues.
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+MIT
