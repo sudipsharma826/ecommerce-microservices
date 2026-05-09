@@ -1,52 +1,70 @@
 import { Module } from '@nestjs/common';
 import { GatewayController } from './gateway.controller';
 import { GatewayService } from './gateway.service';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { join } from 'path';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: [
+        join(process.cwd(), 'apps/gateway/.env'),
+      ],
     }),
-    ClientsModule.register([ 
+    // RabbitMQ Clients
+    ClientsModule.registerAsync([
       {
-        name:'ORDER_SERVICE', // client name  used to inject the client proxy
-        transport: Transport.RMQ, // Communication protocol
-        options: {
-          urls: ['amqp://localhost:5672'], // RabbitMQ server URL
-          queue: 'order_queue', // Queue name to listen to
-          queueOptions: {
-            durable: false // Whether the queue should survive broker restarts
-          }
-        },
-      },
-            {
-        name:'PAYMENT_SERVICE',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://localhost:5672'],
-          queue: 'payment_queue',
-          queueOptions: {
-            durable: false
-          }
-        },
-      },
-            {
-        name:'NOTIFICATION_SERVICE',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://localhost:5672'],
-          queue: 'notification_queue',
-          queueOptions: {
-            durable: false
-          }
-        },
+        name: 'ORDER_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [config.get<string>('RABBITMQ_URL') ?? ''],
+            queue: config.get<string>('ORDER_SERVICE_QUEUE') ?? '',
+            queueOptions: {
+              durable: false,
+            },
+          },
+        }),
       },
 
+      {
+        name: 'PAYMENT_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [config.get<string>('RABBITMQ_URL') ?? ''],
+            queue: config.get<string>('PAYMENT_SERVICE_QUEUE') ?? '',
+            queueOptions: {
+              durable: false,
+            },
+          },
+        }),
+      },
+
+      {
+        name: 'NOTIFICATION_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [config.get<string>('RABBITMQ_URL') ?? ''],
+            queue: config.get<string>('NOTIFICATION_SERVICE_QUEUE') ?? '',
+            queueOptions: {
+              durable: false,
+            },
+          },
+        }),
+      },
     ]),
   ],
+
   controllers: [GatewayController],
   providers: [GatewayService],
 })

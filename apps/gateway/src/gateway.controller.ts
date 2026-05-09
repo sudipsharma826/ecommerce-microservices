@@ -10,8 +10,8 @@ export class GatewayController {
     return this.gatewayService.getHello();
   }
 
-  @Get('order')
-  async getOrderData() {
-    return this.gatewayService.getOrderData();
+  @Get('getProducts')
+  async getProducts() {
+    return this.gatewayService.getProducts();
   }
 }
