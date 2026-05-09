@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common';
 import { GatewayService } from './gateway.service';
 import { CreateOrderDto } from '../../../common/dto/create-order.dto';
 import type { Response } from 'express';
+import { VerifyPaymentDto } from 'common/dto/verify-payment.dto';
 
 @Controller()
 export class GatewayController {
@@ -23,7 +24,7 @@ export class GatewayController {
   }
 
   @Post('verifyPayment')
-  async verifyPayment(@Body() paymentData: { orderId: string , pidx: string }) {
+  async verifyPayment(@Body() paymentData: VerifyPaymentDto) {
     return this.gatewayService.verifyPayment(paymentData.orderId, paymentData.pidx);
   }
 
